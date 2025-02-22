@@ -23,25 +23,26 @@ dp = Dispatcher(storage=storage)
 # Маппинг для преобразования значений ответов в читаемые строки
 ANSWER_TEXTS = {
     'q1': {
-         'q1_yes': "Да",
-         'q1_no': "Нет"
+        'q1_yes': "Да",
+        'q1_no': "Нет"
     },
     'q2': {
-         'q2_1': "до 1 часа в день",
-         'q2_3_5': "до 3-5 часов в день",
-         'q2_6_10': "до 6-10 часов в день"
+        'q2_1': "до 1 часа в день",
+        'q2_3_5': "до 3-5 часов в день",
+        'q2_6_10': "до 6-10 часов в день"
     },
     'q3': {
-         'q3_option1': "от 250к до 350.000кР",
-         'q3_option2': "от 500.000₽",
-         'q3_option3': "от 1.000.000₽"
+        'q3_option1': "от 250к до 350.000кР",
+        'q3_option2': "от 500.000₽",
+        'q3_option3': "от 1.000.000₽"
     },
     'q4': {
-         'q4_option1': "500.000₽",
-         'q4_option2': "3.000.000₽",
-         'q4_option3': "1.000.000₽"
+        'q4_option1': "500.000₽",
+        'q4_option2': "3.000.000₽",
+        'q4_option3': "1.000.000₽"
     }
 }
+
 
 # Определяем состояния для квиза
 class Quiz(StatesGroup):
@@ -50,6 +51,7 @@ class Quiz(StatesGroup):
     q3 = State()  # Выбор бюджета (первый блок)
     q4 = State()  # Выбор бюджета (второй блок)
     waiting_for_final = State()  # ожидание финальных действий
+
 
 # Стартовая команда /start
 @dp.message(Command("start"))
@@ -81,6 +83,7 @@ async def start_handler(message: types.Message, state: FSMContext):
                          reply_markup=keyboard)
     await state.clear()
 
+
 # Обработка нажатия на кнопку "Погнали!"
 @dp.callback_query(F.data == "start_quiz")
 async def process_start_quiz(callback: types.CallbackQuery, state: FSMContext):
@@ -105,6 +108,7 @@ async def process_start_quiz(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
     await state.set_state(Quiz.q1)
 
+
 # Обработка ответа на вопрос 1 ("Да" или "Нет")
 @dp.callback_query(F.data.in_(["q1_yes", "q1_no"]))
 async def process_q1(callback: types.CallbackQuery, state: FSMContext):
@@ -127,6 +131,7 @@ async def process_q1(callback: types.CallbackQuery, state: FSMContext):
                          reply_markup=keyboard)
     await callback.answer()
     await state.set_state(Quiz.q2)
+
 
 # Обработка ответа на вопрос 2
 @dp.callback_query(F.data.in_(["q2_1", "q2_3_5", "q2_6_10"]))
@@ -154,6 +159,7 @@ async def process_q2(callback: types.CallbackQuery, state: FSMContext):
                          reply_markup=keyboard)
     await callback.answer()
     await state.set_state(Quiz.q3)
+
 
 # Обработка ответа на вопрос 3
 @dp.callback_query(F.data.in_(["q3_option1", "q3_option2", "q3_option3"]))
@@ -186,6 +192,7 @@ async def process_q3(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
     await state.set_state(Quiz.q4)
 
+
 # Обработка ответа на вопрос 4 с дополнительным сообщением "Неплохо, продолжаем?"
 @dp.callback_query(F.data.in_(["q4_option1", "q4_option2", "q4_option3"]))
 async def process_q4(callback: types.CallbackQuery, state: FSMContext):
@@ -199,6 +206,7 @@ async def process_q4(callback: types.CallbackQuery, state: FSMContext):
     ])
     await bot.send_message(chat_id=chat_id, text=text, reply_markup=keyboard)
     await callback.answer()
+
 
 # Новый обработчик для кнопки "Да, Даееем Газу!!!"
 @dp.callback_query(F.data == "continue_after_q4")
@@ -229,9 +237,10 @@ async def process_continue_after_q4(callback: types.CallbackQuery, state: FSMCon
     asyncio.create_task(send_delayed_message(chat_id))
     await state.set_state(Quiz.waiting_for_final)
 
-# Функция для отправки сообщения через 2 минуты
+
+# Функция для отправки сообщения через 2 секунды (для теста, можно увеличить время)
 async def send_delayed_message(chat_id: int):
-    await asyncio.sleep(2)  # ожидание 2 секунды (при необходимости увеличить время)
+    await asyncio.sleep(60)
     photo_path = "7.jpg"
     text = "Ответы отправлены? Давай сверим правильные ответы!"
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -243,6 +252,7 @@ async def send_delayed_message(chat_id: int):
                          caption=text,
                          parse_mode=ParseMode.HTML,
                          reply_markup=keyboard)
+
 
 # Обработка нажатия на кнопку "Да, давай!"
 @dp.callback_query(F.data == "final_step")
@@ -261,9 +271,11 @@ async def process_final_step(callback: types.CallbackQuery, state: FSMContext):
 
 <b>4) Какая ценовая политика за услугу «Канал под ключ»?</b>
    Правильный ответ — рыночная процентная политика — 30%. За работу в размере 300.000₽ я реализую бюджет в размере 1.000.000₽.
+
+Хочешь узнать свои правильные ответы? Нажимай на кнопку ниже!
 """
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Хочу узнать свой уровень в телеге!", callback_data="show_result")]
+        [InlineKeyboardButton(text="Хочу узнать свои ответы!", callback_data="show_result")]
     ])
     await bot.send_message(chat_id=callback.message.chat.id,
                            text=text,
@@ -271,12 +283,13 @@ async def process_final_step(callback: types.CallbackQuery, state: FSMContext):
                            reply_markup=keyboard)
     await callback.answer()
 
+
 # Обработка финальной кнопки и расчёт результатов
 @dp.callback_query(F.data == "show_result")
 async def process_show_result(callback: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     score = 0
-    # Определяем правильные ответы (правильный ответ на вопрос 1 — "Нет")
+    # Определяем правильные ответы
     correct_answers = {
         'q1': 'q1_no',
         'q2': 'q2_3_5',
@@ -284,8 +297,6 @@ async def process_show_result(callback: types.CallbackQuery, state: FSMContext):
         'q4': 'q4_option3'
     }
     results_text = "<b>Ваши результаты:</b>\n"
-
-    # Сравниваем ответы пользователя с правильными
     for idx, key in enumerate(['q1', 'q2', 'q3', 'q4'], start=1):
         user_answer = data.get(key, "не ответил")
         if user_answer == correct_answers[key]:
@@ -295,11 +306,10 @@ async def process_show_result(callback: types.CallbackQuery, state: FSMContext):
             results_text += f"Вопрос {idx}: Неправильно ❌\n"
     results_text += f"\nОбщий результат: {score} из 4\n"
 
-    # Определяем уровень пользователя и описание фото
     if score >= 4:
         level = "ПРОФИ"
-        result_photo = "full.jpg"   # Фото для ПРОФИ
-        result_file = "Профи.pdf"     # Файл для ПРОФИ
+        result_photo = "full.jpg"  # Фото для ПРОФИ
+        result_file = "Профи.pdf"  # Файл для ПРОФИ
         photo_description = (
             "<b>Привет, профи</b> 👋\n\n"
             "Устал топтаться на месте? Начинай обрабатывать информацию 👇\n\n"
@@ -307,13 +317,13 @@ async def process_show_result(callback: types.CallbackQuery, state: FSMContext):
             "— Примеры холодных рассылок\n"
             "— Пример общения по звонку\n"
             "— Как донести ценность ваших услуг\n"
-            "— Какими навыками должен обладать профи\n\n"
+            "— Какими навыками должен обладаться профи\n\n"
             "<b>Тогда приступай к изучению👇</b>"
         )
     elif score in [2, 3]:
         level = "ПРОДВИНУТЫЙ"
-        result_photo = "middle.jpg"      # Фото для ПРОДВИНУТЫХ
-        result_file = "Продвинутый.pdf"    # Файл для ПРОДВИНУТЫХ
+        result_photo = "middle.jpg"  # Фото для ПРОДВИНУТЫХ
+        result_file = "Продвинутый.pdf"  # Файл для ПРОДВИНУТЫХ
         photo_description = (
             "<b>Привет, продвинутый!</b> 👋\n\n"
             "Я думаю, тебе не нужно объяснять, что такое CPM и прочие базовые термины. "
@@ -324,13 +334,13 @@ async def process_show_result(callback: types.CallbackQuery, state: FSMContext):
             "— Оптимизация кампаний и масштабирование\n"
             "— Предоставление отчётов и корректировка стратегии\n"
             "— Как удешевлять цену за подписчика\n"
-            "— Какими навыками должен обладать закупщик?\n\n"
+            "— Какими навыками должен обладаться закупщик?\n\n"
             "<b>Начинай читать информацию и не забывай применять её на практике</b> 👇"
         )
     else:
         level = "НОВИЧОК"
-        result_photo = "new.jpg"      # Фото для НОВИЧКА
-        result_file = "Новичок.pdf"   # Файл для НОВИЧКА
+        result_photo = "new.jpg"  # Фото для НОВИЧКА
+        result_file = "Новичок.pdf"  # Файл для НОВИЧКА
         photo_description = (
             "<b>Как заработать в Telegram: Введение для новичков</b>\n\n"
             "Привет! Рад приветствовать тебя в этом разделе. Здесь ты найдёшь полезную информацию, "
@@ -343,27 +353,25 @@ async def process_show_result(callback: types.CallbackQuery, state: FSMContext):
             "- Другие схемы заработка\n\n"
             "Получай чек-лист и изучай информацию подробнее."
         )
-
     results_text += f"\nВаш уровень: {level}"
 
-    # 1. Отправляем пользователю сообщение с результатами
+    # Сохраняем данные о материале в FSM для последующего использования
+    await state.update_data(material_info={
+        "result_photo": result_photo,
+        "result_file": result_file,
+        "photo_description": photo_description
+    })
+
+    # Отправляем сообщение с результатами и инлайн-кнопкой "Получить материал"
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Получить материал", callback_data="get_material")]
+    ])
     await bot.send_message(chat_id=callback.message.chat.id,
                            text=results_text,
-                           parse_mode=ParseMode.HTML)
+                           parse_mode=ParseMode.HTML,
+                           reply_markup=keyboard)
 
-    # 2. Отправляем фотографию с описанием уровня (caption с HTML-разметкой)
-    photo = FSInputFile(result_photo)
-    await bot.send_photo(chat_id=callback.message.chat.id,
-                         photo=photo,
-                         caption=photo_description,
-                         parse_mode=ParseMode.HTML)
-
-    # 3. Отправляем соответствующий файл
-    document = FSInputFile(result_file)
-    await bot.send_document(chat_id=callback.message.chat.id,
-                            document=document)
-
-    # 4. Формируем данные о пользователе и его ответах для администратора с читаемыми ответами
+    # Отправляем данные об ответах пользователя администратору
     admin_message = f"Новый пользователь:\n" \
                     f"Имя: {callback.from_user.full_name}\n" \
                     f"Username: @{callback.from_user.username}\n" \
@@ -377,9 +385,32 @@ async def process_show_result(callback: types.CallbackQuery, state: FSMContext):
                      f"Уровень: {level}"
     await bot.send_message(chat_id=ADMIN_ID, text=admin_message)
 
-    # Завершаем диалог — очищаем данные FSM
+
+# Новый обработчик для кнопки «Получить материал»
+@dp.callback_query(F.data == "get_material")
+async def process_get_material(callback: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    material_info = data.get("material_info", {})
+    result_photo = material_info.get("result_photo")
+    result_file = material_info.get("result_file")
+    photo_description = material_info.get("photo_description")
+
+    # Отправляем фото с описанием
+    photo = FSInputFile(result_photo)
+    await bot.send_photo(chat_id=callback.message.chat.id,
+                         photo=photo,
+                         caption=photo_description,
+                         parse_mode=ParseMode.HTML)
+
+    # Отправляем файл с материалом
+    document = FSInputFile(result_file)
+    await bot.send_document(chat_id=callback.message.chat.id,
+                            document=document)
+
+    # Очищаем данные FSM, завершая диалог
     await state.clear()
     await callback.answer()
+
 
 if __name__ == "__main__":
     asyncio.run(dp.start_polling(bot))
